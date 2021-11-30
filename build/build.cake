@@ -4,7 +4,7 @@
 #addin nuget:?package=Cake.Powershell&version=1.0.1
 #addin nuget:?package=Cake.GitVersioning&version=3.4.220
 
-#tool nuget:?package=MSTest.TestAdapter&version=2.2.5
+#tool nuget:?package=MSTest.TestAdapter&version=2.2.6-preview-20211011-01
 #tool nuget:?package=vswhere&version=2.8.4
 
 using System;
@@ -109,7 +109,7 @@ void RetrieveVersion()
 void UpdateToolsPath(MSBuildSettings buildSettings)
 {
     // Workaround for https://github.com/cake-build/cake/issues/2128
-	var vsInstallation = VSWhereLatest(new VSWhereLatestSettings { Requires = "Microsoft.Component.MSBuild", IncludePrerelease = true });
+	var vsInstallation = VSWhereLatest(new VSWhereLatestSettings { Requires = "Microsoft.Component.MSBuild", IncludePrerelease = false });
 
 	if (vsInstallation != null)
 	{
@@ -254,7 +254,7 @@ public string getMSTestAdapterPath(){
     if(nugetPaths.Count == 0){
         throw new Exception(
             "Cannot locate the MSTest test adapter. " +
-            "You might need to add '#tool nuget:?package=MSTest.TestAdapter&version=2.1.0' " +
+            "You might need to add '#tool nuget:?package=MSTest.TestAdapter&version=2.2.6-preview-20211011-01' " +
             "to the top of your build.cake file.");
     }
 
@@ -268,14 +268,14 @@ Task("Test")
     Information("\nRunning Unit Tests");
     var vswhere = VSWhereLatest(new VSWhereLatestSettings
     {
-        IncludePrerelease = true
+        IncludePrerelease = false
     });
 
     var testSettings = new VSTestSettings
     {
         ToolPath = vswhere + "/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe",
         TestAdapterPath = getMSTestAdapterPath(),
-        ArgumentCustomization = arg => arg.Append("/logger:trx;LogFileName=VsTestResultsUwp.trx /framework:FrameworkUap10"),
+        ArgumentCustomization = arg => arg.Append("/logger:trx;LogFileName=VsTestResultsUwp.trx /framework:FrameworkUap10 /Blame:CollectDump;DumpType=full --diag:diag.log"),
     };
 
     VSTest(baseDir + $"/**/{configuration}/**/UnitTests.*.appxrecipe", testSettings);
@@ -359,7 +359,7 @@ Task("MSTestUITest")
 
 Task("Default")
     .IsDependentOn("Build")
-    //.IsDependentOn("Test")
+    .IsDependentOn("Test")
     .IsDependentOn("UITest")
     .IsDependentOn("Package");
 

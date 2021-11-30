@@ -54,8 +54,8 @@ jobs:
 
   ### Unit Tests ###
 
-#  - powershell: .\build\build.ps1 -Target Test
-#    displayName: Test
+  - powershell: .\build\build.ps1 -Target Test
+    displayName: Test
 
   - task: PublishTestResults@2
     inputs:
@@ -63,6 +63,21 @@ jobs:
       testResultsFiles: '**/VsTestResults*.trx'
     displayName: Publish Test Results
     condition: always()
+
+  - task: CopyFiles@2
+    displayName: Copy Test Diagnostic Output
+    inputs:
+      sourceFolder: .\build
+      contents: '**\*.log'
+      targetFolder: $(build.artifactstagingdirectory)\TestDiagnosticOutput
+    condition: failed()
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Test Diagnostic Output
+    inputs:
+      targetPath: $(build.artifactstagingdirectory)\TestDiagnosticOutput
+      artifactName: TestDiagOutput
+    condition: failed()
 
   ### UI Integration Tests ###
 
